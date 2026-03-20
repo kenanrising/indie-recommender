@@ -455,8 +455,8 @@
     </button>
 
     <div class="sidebar-footer">
-      Data is stored in your browser.<br>
-      Export CSV to back it up.
+      Data lives in this session.<br>
+      Always export CSV to save your work.
     </div>
   </aside>
 
@@ -788,14 +788,14 @@ Optional columns (add any you have):
 
 <script>
 // ── State ────────────────────────────────────────────────────────────────────
-const STORAGE_KEY = 'indie_rec_tracks';
+
 
 function loadTracks() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-  catch { return []; }
+  return [];
+  
 }
 function saveTracks(tracks) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(tracks));
+  
 }
 
 let tracks = loadTracks();
