@@ -1,28 +1,22 @@
-# ── Core ML & Audio ──────────────────────────────────────────────────────────
-laion-clap==1.1.6          # LAION CLAP audio embeddings
-torch>=2.1.0               # PyTorch (CPU wheel fine for small catalogs)
-torchaudio>=2.1.0          # Audio resampling utilities
-librosa>=0.10.1            # Audio loading & preprocessing
-soundfile>=0.12.1          # Fast WAV/FLAC I/O (librosa backend)
+# Pinned for Python 3.11 compatibility on Render
+# ── Core ML & Audio ───────────────────────────────────────────────────────────
+laion-clap==1.1.6
+torch==2.2.2
+torchaudio==2.2.2
+librosa==0.10.2
+soundfile==0.12.1
 
 # ── Numerical & Storage ───────────────────────────────────────────────────────
-numpy>=1.24.0
-pandas>=2.0.0
-pyarrow>=14.0.0            # Parquet support for pandas
-scikit-learn>=1.4.0        # StandardScaler for numeric feature normalisation
+numpy==1.26.4
+pandas==2.2.2
+pyarrow==15.0.2
 
 # ── API ───────────────────────────────────────────────────────────────────────
-fastapi>=0.111.0
-uvicorn[standard]>=0.29.0
-pydantic>=2.0.0
-gunicorn>=21.0.0           # Production process manager
-
-# ── Database (Phase D — user behaviour) ──────────────────────────────────────
-sqlalchemy>=2.0.0          # ORM for SQLite (dev) or Postgres (prod)
-
-# ── Vector DB (Phase E — optional, swap in when catalog > 50k) ───────────────
-# qdrant-client>=1.9.0     # Uncomment when moving to Qdrant
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+pydantic==2.7.1
+gunicorn==22.0.0
 
 # ── Utilities ────────────────────────────────────────────────────────────────
-tqdm>=4.66.0               # Progress bars for embedding pipeline
-python-dotenv>=1.0.0       # Load .env for config
+tqdm==4.66.4
+python-dotenv==1.0.1
