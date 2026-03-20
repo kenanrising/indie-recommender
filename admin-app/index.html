@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Indie Recommender — Track Manager</title>
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d0d0f;
+      --surface:   #16171c;
+      --surface2:  #1e1f26;
+      --border:    #2a2b34;
+      --accent:    #7c5cfc;
+      --accent2:   #a78bfa;
+      --green:     #34d399;
+      --red:       #f87171;
+      --yellow:    #fbbf24;
+      --text:      #e8e8f0;
+      --muted:     #6b7280;
+      --radius:    10px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      padding: 0;
+    }
+
+    /* ── Layout ───────────────────────────────────────────────── */
+    .shell {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ──────────────────────────────────────────────── */
+    .sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 28px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 4px 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+    .logo-icon {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px;
+    }
+    .logo-text { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+    .logo-sub  { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+    .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      width: 100%;
+      text-align: left;
+      transition: all 0.15s;
+    }
+    .nav-btn:hover  { background: var(--surface2); color: var(--text); }
+    .nav-btn.active { background: var(--surface2); color: var(--accent2); }
+    .nav-btn .icon  { font-size: 16px; width: 20px; text-align: center; }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* ── Main ─────────────────────────────────────────────────── */
+    .main {
+      padding: 36px 40px;
+      max-width: 1000px;
+    }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ── Page headers ─────────────────────────────────────────── */
+    .page-header {
+      margin-bottom: 28px;
+    }
+    .page-title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+    }
+    .page-sub {
+      font-size: 14px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ── Stats row ────────────────────────────────────────────── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+    }
+    .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-val   { font-size: 28px; font-weight: 700; margin-top: 6px; }
+    .stat-val.purple { color: var(--accent2); }
+    .stat-val.green  { color: var(--green); }
+    .stat-val.yellow { color: var(--yellow); }
+
+    /* ── Card ─────────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── Form ─────────────────────────────────────────────────── */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-group.full { grid-column: 1 / -1; }
+
+    label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+    }
+    label span.req { color: var(--accent2); margin-left: 2px; }
+
+    input, select, textarea {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      color: var(--text);
+      font-size: 14px;
+      padding: 10px 13px;
+      transition: border 0.15s;
+      outline: none;
+      font-family: inherit;
+      width: 100%;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+    }
+    input::placeholder, textarea::placeholder { color: var(--muted); }
+    textarea { resize: vertical; min-height: 70px; }
+
+    select option { background: var(--surface2); }
+
+    .range-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    input[type="range"] {
+      flex: 1;
+      padding: 0;
+      accent-color: var(--accent);
+      height: 4px;
+      border: none;
+      background: var(--border);
+      cursor: pointer;
+    }
+    .range-val {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent2);
+      min-width: 32px;
+      text-align: right;
+    }
+
+    /* ── Buttons ──────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover { background: #6b4ee0; }
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+    .btn-danger {
+      background: transparent;
+      color: var(--red);
+      border: 1px solid var(--border);
+    }
+    .btn-danger:hover { background: rgba(248,113,113,0.08); }
+    .btn-sm { padding: 6px 12px; font-size: 13px; }
+
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      justify-content: flex-end;
+    }
+
+    /* ── Toast ────────────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 20px;
+      font-size: 14px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(.16,1,.3,1);
+      z-index: 100;
+      max-width: 340px;
+    }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast.success { border-color: var(--green); }
+    #toast.error   { border-color: var(--red); }
+
+    /* ── Track table ──────────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th {
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--surface2); }
+
+    .track-id-badge {
+      font-family: monospace;
+      font-size: 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 2px 7px;
+      color: var(--accent2);
+    }
+
+    .mood-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .mood-energetic  { background: rgba(251,191,36,0.15); color: var(--yellow); }
+    .mood-melancholic{ background: rgba(124,92,252,0.15); color: var(--accent2); }
+    .mood-uplifting  { background: rgba(52,211,153,0.15); color: var(--green); }
+    .mood-romantic   { background: rgba(248,113,113,0.15); color: var(--red); }
+    .mood-dark       { background: rgba(107,114,128,0.15); color: var(--muted); }
+    .mood-chill      { background: rgba(96,165,250,0.15); color: #60a5fa; }
+
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--muted);
+    }
+    .empty-state .big { font-size: 36px; margin-bottom: 10px; }
+    .empty-state p { font-size: 14px; line-height: 1.6; }
+
+    /* ── CSV Import ───────────────────────────────────────────── */
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: var(--accent);
+      background: rgba(124,92,252,0.05);
+    }
+    .drop-zone p { font-size: 14px; color: var(--muted); margin-top: 8px; }
+
+    /* ── API info ─────────────────────────────────────────────── */
+    .api-url-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-family: monospace;
+      font-size: 13px;
+      color: var(--accent2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      word-break: break-all;
+    }
+
+    .info-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .code-block {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      font-family: monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      color: #a8b1c2;
+      overflow-x: auto;
+      white-space: pre;
+    }
+    .code-block .key   { color: var(--accent2); }
+    .code-block .val   { color: var(--green); }
+    .code-block .punct { color: var(--muted); }
+
+    .step-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .step {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .step-num {
+      width: 26px; height: 26px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700;
+      flex-shrink: 0;
+    }
+    .step-text { font-size: 14px; line-height: 1.5; padding-top: 3px; }
+    .step-text strong { color: var(--text); }
+    .step-text span   { color: var(--muted); }
+
+    @media (max-width: 700px) {
+      .shell { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .main { padding: 20px 16px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .info-row  { grid-template-columns: 1fr; }
+      .stats-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">🎵</div>
+      <div>
+        <div class="logo-text">Indie Rec</div>
+        <div class="logo-sub">Track Manager</div>
+      </div>
+    </div>
+
+    <button class="nav-btn active" onclick="showPage('catalog')" id="nav-catalog">
+      <span class="icon">🎶</span> Catalog
+    </button>
+    <button class="nav-btn" onclick="showPage('add')" id="nav-add">
+      <span class="icon">➕</span> Add Track
+    </button>
+    <button class="nav-btn" onclick="showPage('import')" id="nav-import">
+      <span class="icon">📂</span> Import CSV
+    </button>
+    <button class="nav-btn" onclick="showPage('api')" id="nav-api">
+      <span class="icon">🔌</span> API & Adalo
+    </button>
+
+    <div class="sidebar-footer">
+      Data is stored in your browser.<br>
+      Export CSV to back it up.
+    </div>
+  </aside>
+
+  <!-- ── Main content ── -->
+  <main class="main">
+
+    <!-- ══ CATALOG PAGE ══════════════════════════════════════════ -->
+    <div class="page active" id="page-catalog">
+      <div class="page-header">
+        <div class="page-title">Track Catalog</div>
+        <div class="page-sub">All indie tracks in your recommender system.</div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Total Tracks</div>
+          <div class="stat-val purple" id="stat-total">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Artists</div>
+          <div class="stat-val green" id="stat-artists">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Genres</div>
+          <div class="stat-val yellow" id="stat-genres">0</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="justify-content:space-between">
+          <span>🎵 All Tracks</span>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
+            <button class="btn btn-primary btn-sm" onclick="showPage('add')">+ Add Track</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Artist</th>
+                <th>Genre</th>
+                <th>Mood</th>
+                <th>BPM</th>
+                <th>Audio URL</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="track-table-body"></tbody>
+          </table>
+          <div class="empty-state" id="empty-state">
+            <div class="big">🎧</div>
+            <p>No tracks yet.<br>Add your first track or import a CSV to get started.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ADD TRACK PAGE ════════════════════════════════════════ -->
+    <div class="page" id="page-add">
+      <div class="page-header">
+        <div class="page-title" id="form-page-title">Add New Track</div>
+        <div class="page-sub">Fill in track details. Audio URL is required for the recommender to work.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🎵 Track Details</div>
+        <form id="track-form">
+          <input type="hidden" id="edit-id" value="" />
+          <div class="form-grid">
+
+            <div class="form-group">
+              <label>Track Title <span class="req">*</span></label>
+              <input type="text" id="f-title" placeholder="e.g. Midnight Bloom" required />
+            </div>
+
+            <div class="form-group">
+              <label>Artist Name <span class="req">*</span></label>
+              <input type="text" id="f-artist" placeholder="e.g. Echo Valley" required />
+            </div>
+
+            <div class="form-group full">
+              <label>Audio File URL <span class="req">*</span></label>
+              <input type="url" id="f-url" placeholder="https://drive.google.com/... or https://soundcloud.com/..." required />
+              <small style="color:var(--muted);font-size:12px;margin-top:4px">
+                Paste a public direct link to the .mp3 or .wav file. Works with Google Drive (direct download link), Dropbox, or any public URL.
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label>Genre</label>
+              <select id="f-genre">
+                <option value="">— Select genre —</option>
+                <option value="indie-folk">Indie Folk</option>
+                <option value="indie-pop">Indie Pop</option>
+                <option value="indie-rock">Indie Rock</option>
+                <option value="indie-electronic">Indie Electronic</option>
+                <option value="dream-pop">Dream Pop</option>
+                <option value="synth-pop">Synth Pop</option>
+                <option value="lo-fi">Lo-Fi</option>
+                <option value="alternative">Alternative</option>
+                <option value="r&b">R&B / Soul</option>
+                <option value="hip-hop">Hip-Hop</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Mood</label>
+              <select id="f-mood">
+                <option value="">— Select mood —</option>
+                <option value="energetic">Energetic</option>
+                <option value="melancholic">Melancholic</option>
+                <option value="uplifting">Uplifting</option>
+                <option value="romantic">Romantic</option>
+                <option value="dark">Dark</option>
+                <option value="chill">Chill</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>BPM <small style="color:var(--muted)">(tempo)</small></label>
+              <input type="number" id="f-bpm" placeholder="e.g. 120" min="40" max="220" />
+            </div>
+
+            <div class="form-group">
+              <label>Energy <small style="color:var(--muted)">(0 = calm, 1 = intense)</small></label>
+              <div class="range-wrap">
+                <input type="range" id="f-energy" min="0" max="1" step="0.01" value="0.5"
+                       oninput="document.getElementById('energy-val').textContent=parseFloat(this.value).toFixed(2)" />
+                <span class="range-val" id="energy-val">0.50</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Danceability <small style="color:var(--muted)">(0 – 1)</small></label>
+              <div class="range-wrap">
+                <input type="range" id="f-dance" min="0" max="1" step="0.01" value="0.5"
+                       oninput="document.getElementById('dance-val').textContent=parseFloat(this.value).toFixed(2)" />
+                <span class="range-val" id="dance-val">0.50</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Acousticness <small style="color:var(--muted)">(0 = electronic, 1 = acoustic)</small></label>
+              <div class="range-wrap">
+                <input type="range" id="f-acoustic" min="0" max="1" step="0.01" value="0.5"
+                       oninput="document.getElementById('acoustic-val').textContent=parseFloat(this.value).toFixed(2)" />
+                <span class="range-val" id="acoustic-val">0.50</span>
+              </div>
+            </div>
+
+            <div class="form-group full">
+              <label>Notes <small style="color:var(--muted)">(optional)</small></label>
+              <textarea id="f-notes" placeholder="Any notes about this track..."></textarea>
+            </div>
+
+          </div><!-- /form-grid -->
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-ghost" onclick="cancelForm()">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="submit-btn">Save Track</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ══ IMPORT CSV PAGE ═══════════════════════════════════════ -->
+    <div class="page" id="page-import">
+      <div class="page-header">
+        <div class="page-title">Import CSV</div>
+        <div class="page-sub">Bulk-upload tracks from a spreadsheet.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📂 Upload CSV File</div>
+        <div class="drop-zone" id="drop-zone" onclick="document.getElementById('csv-file').click()">
+          <div style="font-size:32px">📄</div>
+          <p><strong>Click to choose a file</strong> or drag and drop here</p>
+          <p>Accepts .csv files</p>
+          <input type="file" id="csv-file" accept=".csv" style="display:none" onchange="handleCSVUpload(event)" />
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📋 Required CSV Format</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Your CSV must have these exact column headers (first row):</p>
+        <div class="code-block"><span class="key">track_id</span><span class="punct">,</span><span class="key">title</span><span class="punct">,</span><span class="key">artist</span><span class="punct">,</span><span class="key">audio_file_path</span>
+
+Optional columns (add any you have):
+<span class="key">bpm</span><span class="punct">,</span><span class="key">energy</span><span class="punct">,</span><span class="key">danceability</span><span class="punct">,</span><span class="key">acousticness</span><span class="punct">,</span><span class="key">mood</span><span class="punct">,</span><span class="key">genre</span><span class="punct">,</span><span class="key">notes</span></div>
+        <p style="font-size:13px;color:var(--muted);margin-top:12px">
+          If you don't have a <code style="color:var(--accent2)">track_id</code>, leave that column empty — one will be generated automatically.
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">⬇ Download Template</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Download a pre-filled CSV template you can open in Google Sheets or Excel.</p>
+        <button class="btn btn-ghost" onclick="downloadTemplate()">⬇ Download Template CSV</button>
+      </div>
+    </div>
+
+    <!-- ══ API & ADALO PAGE ══════════════════════════════════════ -->
+    <div class="page" id="page-api">
+      <div class="page-header">
+        <div class="page-title">API & Adalo Setup</div>
+        <div class="page-sub">Everything you need to connect your Adalo app to the recommender.</div>
+      </div>
+
+      <!-- Step 1: Get CSV -->
+      <div class="card">
+        <div class="card-title">Step 1 — Export your catalog</div>
+        <div class="step-list">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-text">
+              <strong>Add all your tracks</strong> using the Add Track form or the CSV import.<br>
+              <span>Then click Export CSV to download your complete catalog file.</span>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-text">
+              <strong>Export your CSV</strong> — this is the file your backend needs.<br>
+              <span>You'll upload this file to your Render deployment.</span>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <button class="btn btn-primary" onclick="exportCSV()">⬇ Export Catalog CSV</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Deploy backend -->
+      <div class="card">
+        <div class="card-title">Step 2 — Deploy the backend to Render</div>
+        <div class="step-list">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-text">
+              <strong>Go to <a href="https://github.com" target="_blank" style="color:var(--accent2)">GitHub.com</a></strong> and create a free account if you don't have one.
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-text">
+              <strong>Create a new repository</strong> called <code style="color:var(--accent2)">indie-recommender</code> and upload all the files from the zip you downloaded.
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-text">
+              <strong>Go to <a href="https://render.com" target="_blank" style="color:var(--accent2)">Render.com</a></strong>, create a free account, click <strong>New → Web Service</strong>, and connect your GitHub repo. Render auto-reads the <code style="color:var(--accent2)">render.yaml</code> file — no configuration needed.
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">4</div>
+            <div class="step-text">
+              <strong>Upload your catalog CSV</strong> to the <code style="color:var(--accent2)">data/</code> folder in your GitHub repo (replace <code style="color:var(--accent2)">tracks_sample.csv</code> with your exported file, renamed to <code style="color:var(--accent2)">tracks.csv</code>).
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">5</div>
+            <div class="step-text">
+              <strong>Run the embedding pipeline</strong> from the Render Shell tab:<br>
+              <code style="color:var(--accent2)">python scripts/build_embeddings.py --csv data/tracks.csv --out embeddings/</code>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Adalo -->
+      <div class="card">
+        <div class="card-title">Step 3 — Wire to Adalo Custom Action</div>
+        <div class="info-row">
+          <div>
+            <label style="display:block;margin-bottom:6px">Endpoint URL</label>
+            <div class="api-url-box">
+              <span>https://YOUR-APP.onrender.com/recommend_deep</span>
+              <button class="btn btn-ghost btn-sm" onclick="copyText('https://YOUR-APP.onrender.com/recommend_deep')">Copy</button>
+            </div>
+          </div>
+          <div>
+            <label style="display:block;margin-bottom:6px">Method</label>
+            <div class="api-url-box" style="color:var(--green)">POST</div>
+          </div>
+        </div>
+
+        <label style="display:block;margin-bottom:6px;font-size:13px;color:var(--muted)">Request Body (paste into Adalo)</label>
+        <div class="code-block"><span class="punct">{</span>
+  <span class="key">"track_id"</span><span class="punct">:</span> <span class="val">"&lt;Magic Text — Current Track ID&gt;"</span><span class="punct">,</span>
+  <span class="key">"k"</span><span class="punct">:</span> <span class="val">10</span>
+<span class="punct">}</span></div>
+
+        <label style="display:block;margin-top:16px;margin-bottom:6px;font-size:13px;color:var(--muted)">Response — map these fields in Adalo's Output tab</label>
+        <div class="code-block"><span class="punct">{</span>
+  <span class="key">"results"</span><span class="punct">: [</span>
+    <span class="punct">{</span>
+      <span class="key">"track_id"</span><span class="punct">:</span> <span class="val">"TRK004"</span><span class="punct">,</span>     <span class="punct">← bind to "Recommended Track ID"</span>
+      <span class="key">"title"</span><span class="punct">:</span>    <span class="val">"Low Signal"</span><span class="punct">,</span>    <span class="punct">← bind to "Track Title"</span>
+      <span class="key">"artist"</span><span class="punct">:</span>   <span class="val">"Mara Blue"</span><span class="punct">,</span>     <span class="punct">← bind to "Artist Name"</span>
+      <span class="key">"score"</span><span class="punct">:</span>    <span class="val">0.912</span>            <span class="punct">← bind to "Similarity Score"</span>
+    <span class="punct">}</span>
+  <span class="punct">]</span>
+<span class="punct">}</span></div>
+      </div>
+
+      <!-- Health check -->
+      <div class="card">
+        <div class="card-title">🩺 Test Your API</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:12px">
+          Once deployed, open this URL in your browser — it should return <code style="color:var(--green)">{"status":"ok"}</code>
+        </p>
+        <div class="api-url-box">
+          <span>https://YOUR-APP.onrender.com/health</span>
+          <button class="btn btn-ghost btn-sm" onclick="copyText('https://YOUR-APP.onrender.com/health')">Copy</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'indie_rec_tracks';
+
+function loadTracks() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch { return []; }
+}
+function saveTracks(tracks) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(tracks));
+}
+
+let tracks = loadTracks();
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+  if (name === 'catalog') renderTable();
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function toast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.className = 'show ' + type;
+  el.innerHTML = (type === 'success' ? '✅' : '❌') + ' ' + msg;
+  setTimeout(() => { el.className = ''; }, 3200);
+}
+
+// ── ID generator ──────────────────────────────────────────────────────────────
+function genId() {
+  return 'TRK' + String(Date.now()).slice(-6) + Math.random().toString(36).slice(2,5).toUpperCase();
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+function updateStats() {
+  document.getElementById('stat-total').textContent   = tracks.length;
+  document.getElementById('stat-artists').textContent = new Set(tracks.map(t => t.artist)).size;
+  document.getElementById('stat-genres').textContent  = new Set(tracks.map(t => t.genre).filter(Boolean)).size;
+}
+
+// ── Table ─────────────────────────────────────────────────────────────────────
+function renderTable() {
+  updateStats();
+  const tbody = document.getElementById('track-table-body');
+  const empty = document.getElementById('empty-state');
+
+  if (tracks.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = tracks.map((t, i) => `
+    <tr>
+      <td><span class="track-id-badge">${t.track_id}</span></td>
+      <td><strong>${escHtml(t.title)}</strong></td>
+      <td>${escHtml(t.artist)}</td>
+      <td style="color:var(--muted);font-size:13px">${t.genre || '—'}</td>
+      <td>${t.mood ? `<span class="mood-badge mood-${t.mood}">${t.mood}</span>` : '—'}</td>
+      <td style="color:var(--muted);font-size:13px">${t.bpm || '—'}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--muted)">
+        ${t.audio_file_path ? `<a href="${escHtml(t.audio_file_path)}" target="_blank" style="color:var(--accent2)">${escHtml(t.audio_file_path).substring(0,40)}…</a>` : '—'}
+      </td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" onclick="editTrack(${i})">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteTrack(${i})">🗑</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Form ──────────────────────────────────────────────────────────────────────
+document.getElementById('track-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const editId = document.getElementById('edit-id').value;
+
+  const track = {
+    track_id:        editId ? (tracks.find(t => t._idx == editId)?.track_id || genId()) : genId(),
+    title:           document.getElementById('f-title').value.trim(),
+    artist:          document.getElementById('f-artist').value.trim(),
+    audio_file_path: document.getElementById('f-url').value.trim(),
+    genre:           document.getElementById('f-genre').value,
+    mood:            document.getElementById('f-mood').value,
+    bpm:             document.getElementById('f-bpm').value || '',
+    energy:          parseFloat(document.getElementById('f-energy').value).toFixed(2),
+    danceability:    parseFloat(document.getElementById('f-dance').value).toFixed(2),
+    acousticness:    parseFloat(document.getElementById('f-acoustic').value).toFixed(2),
+    notes:           document.getElementById('f-notes').value.trim(),
+  };
+
+  if (editId !== '') {
+    const idx = parseInt(editId);
+    track.track_id = tracks[idx].track_id; // preserve original ID
+    tracks[idx] = track;
+    toast('Track updated successfully');
+  } else {
+    tracks.push(track);
+    toast('Track added to catalog');
+  }
+
+  saveTracks(tracks);
+  resetForm();
+  showPage('catalog');
+});
+
+function resetForm() {
+  document.getElementById('track-form').reset();
+  document.getElementById('edit-id').value = '';
+  document.getElementById('energy-val').textContent   = '0.50';
+  document.getElementById('dance-val').textContent    = '0.50';
+  document.getElementById('acoustic-val').textContent = '0.50';
+  document.getElementById('f-energy').value   = '0.5';
+  document.getElementById('f-dance').value    = '0.5';
+  document.getElementById('f-acoustic').value = '0.5';
+  document.getElementById('form-page-title').textContent = 'Add New Track';
+  document.getElementById('submit-btn').textContent = 'Save Track';
+}
+
+function cancelForm() {
+  resetForm();
+  showPage('catalog');
+}
+
+function editTrack(idx) {
+  const t = tracks[idx];
+  document.getElementById('edit-id').value         = idx;
+  document.getElementById('f-title').value          = t.title || '';
+  document.getElementById('f-artist').value         = t.artist || '';
+  document.getElementById('f-url').value            = t.audio_file_path || '';
+  document.getElementById('f-genre').value          = t.genre || '';
+  document.getElementById('f-mood').value           = t.mood || '';
+  document.getElementById('f-bpm').value            = t.bpm || '';
+  document.getElementById('f-energy').value         = t.energy || '0.5';
+  document.getElementById('f-dance').value          = t.danceability || '0.5';
+  document.getElementById('f-acoustic').value       = t.acousticness || '0.5';
+  document.getElementById('f-notes').value          = t.notes || '';
+  document.getElementById('energy-val').textContent   = parseFloat(t.energy || 0.5).toFixed(2);
+  document.getElementById('dance-val').textContent    = parseFloat(t.danceability || 0.5).toFixed(2);
+  document.getElementById('acoustic-val').textContent = parseFloat(t.acousticness || 0.5).toFixed(2);
+  document.getElementById('form-page-title').textContent = 'Edit Track';
+  document.getElementById('submit-btn').textContent = 'Update Track';
+  showPage('add');
+}
+
+function deleteTrack(idx) {
+  if (!confirm(`Delete "${tracks[idx].title}"? This cannot be undone.`)) return;
+  tracks.splice(idx, 1);
+  saveTracks(tracks);
+  renderTable();
+  toast('Track deleted', 'error');
+}
+
+// ── CSV Export ────────────────────────────────────────────────────────────────
+function exportCSV() {
+  if (tracks.length === 0) { toast('No tracks to export', 'error'); return; }
+  const cols = ['track_id','title','artist','audio_file_path','bpm','energy','danceability','acousticness','mood','genre','notes'];
+  const rows = [cols.join(',')];
+  tracks.forEach(t => {
+    rows.push(cols.map(c => {
+      const v = String(t[c] ?? '');
+      return v.includes(',') || v.includes('"') ? `"${v.replace(/"/g,'""')}"` : v;
+    }).join(','));
+  });
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'tracks.csv';
+  a.click();
+  toast('CSV exported — upload to your GitHub repo');
+}
+
+// ── Template download ─────────────────────────────────────────────────────────
+function downloadTemplate() {
+  const csv = `track_id,title,artist,audio_file_path,bpm,energy,danceability,acousticness,mood,genre,notes
+TRK001,Song Title Here,Artist Name,https://your-audio-url.com/file.mp3,120,0.70,0.65,0.30,uplifting,indie-pop,Example track
+`;
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'tracks_template.csv';
+  a.click();
+}
+
+// ── CSV Import ────────────────────────────────────────────────────────────────
+function handleCSVUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const lines = e.target.result.split('\n').filter(l => l.trim());
+    if (lines.length < 2) { toast('CSV has no data rows', 'error'); return; }
+
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/^"|"$/g,''));
+    const required = ['title','artist'];
+    const missing = required.filter(r => !headers.includes(r));
+    if (missing.length) { toast(`CSV missing columns: ${missing.join(', ')}`, 'error'); return; }
+
+    let added = 0;
+    for (let i = 1; i < lines.length; i++) {
+      const vals = parseCSVLine(lines[i]);
+      if (vals.every(v => !v.trim())) continue;
+      const row = {};
+      headers.forEach((h, idx) => { row[h] = (vals[idx] || '').trim().replace(/^"|"$/g,''); });
+      if (!row.title || !row.artist) continue;
+
+      const track = {
+        track_id:        row.track_id || genId(),
+        title:           row.title,
+        artist:          row.artist,
+        audio_file_path: row.audio_file_path || row.audio_url || '',
+        genre:           row.genre || '',
+        mood:            row.mood  || '',
+        bpm:             row.bpm   || '',
+        energy:          row.energy       || '0.50',
+        danceability:    row.danceability || '0.50',
+        acousticness:    row.acousticness || '0.50',
+        notes:           row.notes || '',
+      };
+      tracks.push(track);
+      added++;
+    }
+
+    saveTracks(tracks);
+    toast(`Imported ${added} tracks successfully`);
+    showPage('catalog');
+  };
+  reader.readAsText(file);
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let cur = '', inQ = false;
+  for (let c of line) {
+    if (c === '"') { inQ = !inQ; }
+    else if (c === ',' && !inQ) { result.push(cur); cur = ''; }
+    else { cur += c; }
+  }
+  result.push(cur);
+  return result;
+}
+
+// ── Drag-and-drop on import ───────────────────────────────────────────────────
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('dragover'); });
+dz.addEventListener('dragleave', ()  => dz.classList.remove('dragover'));
+dz.addEventListener('drop', e => {
+  e.preventDefault();
+  dz.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.csv')) {
+    handleCSVUpload({ target: { files: [file] } });
+  } else {
+    toast('Please drop a .csv file', 'error');
+  }
+});
+
+// ── Clipboard ─────────────────────────────────────────────────────────────────
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => toast('Copied to clipboard'));
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+renderTable();
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+track_id,title,artist,audio_file_path,bpm,energy,danceability,acousticness,mood,genre
+TRK001,Midnight Bloom,Echo Valley,/data/audio/midnight_bloom.mp3,92.0,0.61,0.55,0.72,melancholic,indie-folk
+TRK002,Static Dream,Neon Wolves,/data/audio/static_dream.wav,128.0,0.84,0.78,0.12,energetic,indie-electronic
+TRK003,Coastal Drive,The Paperbacks,/data/audio/coastal_drive.mp3,108.0,0.70,0.68,0.45,uplifting,indie-pop
+TRK004,Low Signal,Mara Blue,/data/audio/low_signal.wav,85.0,0.52,0.42,0.81,melancholic,dream-pop
+TRK005,Velvet Underground,Cass & The Tide,/data/audio/velvet_underground.mp3,97.0,0.65,0.60,0.58,romantic,indie-rock
+TRK006,Glass Hours,Wren Valley,/data/audio/glass_hours.mp3,110.0,0.73,0.66,0.39,uplifting,indie-pop
+TRK007,Neon Haze,The Veldt Kids,/data/audio/neon_haze.wav,135.0,0.91,0.82,0.05,energetic,synth-pop
+TRK008,Quiet Riot,Sunday Afternoon,/data/audio/quiet_riot.mp3,78.0,0.40,0.38,0.90,melancholic,lo-fi

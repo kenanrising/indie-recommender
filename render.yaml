@@ -1,0 +1,43 @@
+# render.yaml — Render.com Infrastructure-as-Code config
+# ──────────────────────────────────────────────────────────────────────────────
+# This file tells Render exactly how to build and run your API.
+# Push it to your GitHub repo root; Render detects it automatically.
+#
+# Free tier ("starter") works for development.
+# Upgrade to "standard" ($7/mo) for production — it never sleeps.
+# ──────────────────────────────────────────────────────────────────────────────
+
+services:
+  - type: web
+    name: indie-recommender-api
+    runtime: python
+    plan: starter           # free tier — upgrade to "standard" for production
+
+    # ── Build phase ───────────────────────────────────────────────────────────
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+
+    # ── Start phase ───────────────────────────────────────────────────────────
+    # gunicorn is the production WSGI runner; uvicorn workers handle async
+    startCommand: >
+      gunicorn api:app
+      --worker-class uvicorn.workers.UvicornWorker
+      --workers 1
+      --bind 0.0.0.0:$PORT
+      --timeout 120
+
+    # ── Environment variables ─────────────────────────────────────────────────
+    envVars:
+      - key: EMBEDDINGS_DIR
+        value: embeddings/      # path relative to project root
+      - key: PYTHON_VERSION
+        value: "3.11"
+
+    # ── Health check ──────────────────────────────────────────────────────────
+    healthCheckPath: /health
+
+    # ── Persistent disk (stores embeddings.npy across deploys) ───────────────
+    # Remove this block if you prefer to commit embeddings.npy to your repo.
+    disk:
+      name: embeddings-disk
+      mountPath: /opt/render/project/src/embeddings
+      sizeGB: 1               # 1 GB is plenty for a few-thousand-track catalog
