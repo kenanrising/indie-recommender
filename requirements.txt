@@ -1,4 +1,5 @@
-laion-clap==1.1.6
+# Python 3.11 — all packages have pre-built wheels, no source compilation needed
+transformers==4.40.2
 torch==2.9.0
 torchaudio==2.9.0
 librosa==0.10.2
@@ -12,3 +13,5 @@ pydantic==2.7.1
 gunicorn==22.0.0
 tqdm==4.66.4
 python-dotenv==1.0.1
+accelerate==0.30.0
+datasets==2.19.1
