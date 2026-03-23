@@ -71,12 +71,15 @@ class HealthResponse(BaseModel):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Pre-warm the embeddings cache so the first request is fast."""
-    print(f"[startup] Loading embeddings from '{EMBEDDINGS_DIR}'...")
-    recommender.preload(EMBEDDINGS_DIR)
-    print("[startup] Embeddings ready.")
+    """Try to pre-warm embeddings — if not built yet, start anyway."""
+    try:
+        print(f"[startup] Loading embeddings from '{EMBEDDINGS_DIR}'...")
+        recommender.preload(EMBEDDINGS_DIR)
+        print("[startup] Embeddings ready.")
+    except FileNotFoundError:
+        print("[startup] No embeddings found — API starting without them.")
+        print("[startup] /recommend_deep will return 503 until embeddings are built.")
     yield
-    # (cleanup on shutdown — nothing needed here)
 
 
 app = FastAPI(
