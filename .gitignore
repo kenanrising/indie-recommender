@@ -13,8 +13,6 @@ venv/
 ~/.cache/laion_clap/
 
 # Embeddings (optional — commit only if repo is private and catalog is small)
-# embeddings/embeddings.npy
-# embeddings/track_index.csv
 
 # IDE
 .vscode/

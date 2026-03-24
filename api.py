@@ -75,9 +75,10 @@ def get_clap():
 # ── Helper: embed a raw audio array on the fly ────────────────────────────────
 def embed_audio(audio: np.ndarray) -> np.ndarray:
     model, processor = get_clap()
-    inputs = processor(audios=audio, sampling_rate=SAMPLE_RATE, return_tensors="pt")
+    inputs = processor(audio=audio, sampling_rate=SAMPLE_RATE, return_tensors="pt")
     with torch.no_grad():
-        emb = model.get_audio_features(**inputs)
+        audio_out = model.audio_model(**inputs)
+        emb = model.audio_projection(audio_out.pooler_output)  # (1, 512)
     vec = emb.squeeze().cpu().numpy().astype(np.float32)
     vec /= np.linalg.norm(vec) or 1.0   # L2 normalise
     return vec
