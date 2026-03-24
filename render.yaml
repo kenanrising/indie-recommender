@@ -1,21 +1,15 @@
-# render.yaml — Render.com deployment config
 services:
   - type: web
     name: indie-recommender-api
     runtime: python
     plan: starter
     pythonVersion: "3.11.9"
-
     buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements.txt
-
-    startCommand: gunicorn api:app --worker-class uvicorn.workers.UvicornWorker --workers 1 --bind 0.0.0.0:$PORT --timeout 120
-
+    startCommand: gunicorn api:app --worker-class uvicorn.workers.UvicornWorker --workers 1 --bind 0.0.0.0:$PORT --timeout 300 --graceful-timeout 300
     envVars:
       - key: EMBEDDINGS_DIR
         value: embeddings/
-
     healthCheckPath: /health
-
     disk:
       name: embeddings-disk
       mountPath: /opt/render/project/src/embeddings
